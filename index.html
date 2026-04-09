@@ -1,11 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html><h2>🚨 Alertas detectadas: <span id="contador">0</span></h2>
 <head>
 <meta charset="UTF-8">
 <title>Alerta Verde AI</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>// Permiso de notificaciones
+if (Notification.permission !== "granted") {
+  Notification.requestPermission();
+}
 
-<style>
+let totalAlertas = 0;
+<style>.falla {
+  border: 2px solid red;
+  animation: parpadeo 1s infinite;
+}
+
+@keyframes parpadeo {
+  0% { background-color: #7f1d1d; }
+  50% { background-color: #b91c1c; }
+  100% { background-color: #7f1d1d; }
+}
 body {
   font-family: Arial;
   background: #0f172a;
@@ -119,9 +132,3 @@ function analizar() {
 
 </body>
 </html>
-if (estado === "Falla") {
-  alert("🚨 FALLA DETECTADA");
-
-  let audio = new Audio("https://www.soundjay.com/buttons/beep-01a.mp3");
-  audio.play();
-}
