@@ -33,15 +33,16 @@ button {
   border-radius: 10px;
 }
 
+/* 🔴 EFECTO DE ALERTA */
 .falla {
   border: 2px solid red;
-  animation: parpadeo 1s infinite;
+  animation: parpadeo 0.8s infinite;
 }
 
 @keyframes parpadeo {
-  0% { background-color: #7f1d1d; }
-  50% { background-color: #b91c1c; }
-  100% { background-color: #7f1d1d; }
+  0% { background-color: #1e293b; }
+  50% { background-color: #7f1d1d; }
+  100% { background-color: #1e293b; }
 }
 </style>
 </head>
@@ -54,9 +55,9 @@ button {
 
 <h2>📥 Agregar panel</h2>
 
-<input id="panel" placeholder="ID">
+<input id="panel" placeholder="ID Panel">
 <input id="ubicacion" placeholder="Ubicación">
-<input id="temperatura" placeholder="Temp">
+<input id="temperatura" placeholder="Temperatura">
 <input id="voltaje" placeholder="Voltaje">
 <input id="corriente" placeholder="Corriente">
 <input id="eficiencia" placeholder="Eficiencia">
@@ -73,6 +74,7 @@ button {
 
 <script>
 
+// Permiso notificaciones
 if (Notification.permission !== "granted") {
   Notification.requestPermission();
 }
@@ -80,8 +82,9 @@ if (Notification.permission !== "granted") {
 let paneles = [];
 let totalAlertas = 0;
 
-// Agregar panel
+// ➕ AGREGAR PANEL
 function agregarPanel() {
+
   const p = {
     panel: document.getElementById("panel").value,
     ubicacion: document.getElementById("ubicacion").value,
@@ -96,13 +99,23 @@ function agregarPanel() {
   const div = document.createElement("div");
   div.className = "panel";
   div.innerHTML = `Panel ${p.panel} - ${p.ubicacion}`;
+
   document.getElementById("lista").appendChild(div);
+
+  // limpiar inputs
+  document.getElementById("panel").value = "";
+  document.getElementById("ubicacion").value = "";
+  document.getElementById("temperatura").value = "";
+  document.getElementById("voltaje").value = "";
+  document.getElementById("corriente").value = "";
+  document.getElementById("eficiencia").value = "";
 }
 
-// Analizar todos
+// 🚀 ANALIZAR TODOS
 function analizarTodo() {
 
   document.getElementById("resultados").innerHTML = "";
+  totalAlertas = 0;
 
   paneles.forEach(p => {
 
@@ -116,23 +129,31 @@ function analizarTodo() {
     let costo = energia * 0.15;
     let reparacion = estado === "Falla" ? (Math.random()*150+50) : 0;
 
+    // 🚨 ALERTA
     if (estado === "Falla") {
+
       totalAlertas++;
-      document.getElementById("contador").innerText = totalAlertas;
+      
+      // Notificación
+      if (Notification.permission === "granted") {
+        new Notification("🚨 Falla detectada", {
+          body: `Panel ${p.panel} - ${p.ubicacion}`
+        });
+      }
 
-      new Notification("🚨 Falla detectada", {
-        body: `Panel ${p.panel} - ${p.ubicacion}`
-      });
-
+      // Sonido
       new Audio("https://www.soundjay.com/buttons/beep-01a.mp3").play();
     }
 
+    // Crear tarjeta
     const div = document.createElement("div");
-    div.className = "panel " + (estado === "Falla" ? "falla" : "");
+
+    // 🔴 IMPORTANTE: solo falla parpadea
+    div.className = estado === "Falla" ? "panel falla" : "panel";
 
     div.innerHTML = `
       <h3>Panel ${p.panel}</h3>
-      <p>${p.ubicacion}</p>
+      <p>📍 ${p.ubicacion}</p>
       <p style="color:${estado === "Falla" ? "red" : "lightgreen"}">${estado}</p>
       <p>⚡ ${energia.toFixed(2)} kWh</p>
       <p>💸 $${costo.toFixed(2)}</p>
@@ -141,6 +162,8 @@ function analizarTodo() {
 
     document.getElementById("resultados").appendChild(div);
   });
+
+  document.getElementById("contador").innerText = totalAlertas;
 }
 
 </script>
