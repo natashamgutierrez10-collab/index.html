@@ -12,7 +12,7 @@ body {
   text-align: center;
 }
 
-input, button {
+input, button, select {
   margin: 5px;
   padding: 8px;
   border-radius: 5px;
@@ -29,20 +29,27 @@ button {
   background: #1e293b;
   margin: 10px auto;
   padding: 15px;
-  width: 320px;
+  width: 330px;
   border-radius: 10px;
 }
 
-/* 🔴 ALERTA */
 .falla {
   border: 2px solid red;
   animation: parpadeo 0.8s infinite;
 }
 
 @keyframes parpadeo {
-  0% { background-color: #1e293b; }
-  50% { background-color: #7f1d1d; }
-  100% { background-color: #1e293b; }
+  0% { background: #1e293b; }
+  50% { background: #7f1d1d; }
+  100% { background: #1e293b; }
+}
+
+.kpi {
+  display: inline-block;
+  background: #1e293b;
+  padding: 10px;
+  margin: 5px;
+  border-radius: 10px;
 }
 </style>
 </head>
@@ -50,148 +57,161 @@ button {
 <body>
 
 <h1>🌱 Alerta Verde AI</h1>
+<p>Monitoreo inteligente + decisiones económicas</p>
 
-<h2>🚨 Alertas: <span id="contador">0</span></h2>
+<div class="kpi">⚡ Producción total: <span id="produccion">0</span> kWh</div>
+<div class="kpi">🚨 Alertas: <span id="alertas">0</span></div>
 
 <h2>📥 Agregar panel</h2>
 
-<input id="panel" placeholder="ID Panel">
+<input id="panel" placeholder="ID">
 <input id="ubicacion" placeholder="Ubicación">
-<input id="temperatura" placeholder="Temperatura">
+<input id="temperatura" placeholder="Temp">
 <input id="voltaje" placeholder="Voltaje">
 <input id="corriente" placeholder="Corriente">
 <input id="eficiencia" placeholder="Eficiencia">
 
+<select id="garantia">
+  <option value="si">🛡️ Con garantía</option>
+  <option value="no">❌ Sin garantía</option>
+</select>
+
 <br>
-<button onclick="agregarPanel()">➕ Agregar Panel</button>
-<button onclick="analizarTodo()">🚀 Analizar Todos</button>
+<button onclick="agregar()">➕ Agregar</button>
+<button onclick="analizar()">🚀 Analizar</button>
 
-<h2>📋 Paneles cargados</h2>
-<div id="lista"></div>
-
-<h2>🚨 Resultados</h2>
+<h2>📊 Estado de paneles</h2>
 <div id="resultados"></div>
+
+<h2>📜 Historial de fallos</h2>
+<ul id="historial"></ul>
 
 <script>
 
-if (Notification.permission !== "granted") {
-  Notification.requestPermission();
-}
-
 let paneles = [];
-let totalAlertas = 0;
 
-// ➕ AGREGAR PANEL
-function agregarPanel() {
+function agregar() {
+  paneles.push({
+    id: panel.value,
+    ubicacion: ubicacion.value,
+    temp: +temperatura.value,
+    volt: +voltaje.value,
+    corr: +corriente.value,
+    eff: +eficiencia.value,
+    garantia: garantia.value
+  });
 
-  const p = {
-    panel: document.getElementById("panel").value,
-    ubicacion: document.getElementById("ubicacion").value,
-    temp: parseFloat(document.getElementById("temperatura").value),
-    volt: parseFloat(document.getElementById("voltaje").value),
-    corr: parseFloat(document.getElementById("corriente").value),
-    eff: parseFloat(document.getElementById("eficiencia").value)
-  };
-
-  paneles.push(p);
-
-  const div = document.createElement("div");
-  div.className = "panel";
-  div.innerHTML = `Panel ${p.panel} - ${p.ubicacion}`;
-
-  document.getElementById("lista").appendChild(div);
-
-  // limpiar inputs
-  document.getElementById("panel").value = "";
-  document.getElementById("ubicacion").value = "";
-  document.getElementById("temperatura").value = "";
-  document.getElementById("voltaje").value = "";
-  document.getElementById("corriente").value = "";
-  document.getElementById("eficiencia").value = "";
+  alert("Panel agregado");
 }
 
-// 🚀 ANALIZAR TODOS
-function analizarTodo() {
+function analizar() {
 
-  document.getElementById("resultados").innerHTML = "";
-  totalAlertas = 0;
+  let totalProd = 0;
+  let totalAlertas = 0;
+
+  resultados.innerHTML = "";
 
   paneles.forEach(p => {
 
     let estado = "Normal";
+    let tipo = "";
     let motivo = "";
     let recomendacion = "";
     let prioridad = "Baja";
 
-    // 🔍 Lógica de fallas
+    // 🔍 FALLAS
     if (p.eff < 50) {
       estado = "Falla";
-      motivo = "Baja eficiencia";
-      recomendacion = "Revisar suciedad o daño del panel";
-      prioridad = "Alta";
-    }
-
-    if (p.volt < 20) {
-      estado = "Falla";
-      motivo = "Voltaje bajo";
-      recomendacion = "Revisar conexiones eléctricas";
+      tipo = "🔻 Baja eficiencia";
+      motivo = "Conversión energética baja";
+      recomendacion = "Limpiar o revisar daño";
       prioridad = "Alta";
     }
 
     if (p.temp > 60) {
       estado = "Falla";
-      motivo = "Temperatura excesiva";
-      recomendacion = "Mejorar ventilación del panel";
+      tipo = "🔥 Sobrecalentamiento";
+      motivo = "Temperatura elevada";
+      recomendacion = "Mejorar ventilación";
       prioridad = "Media";
     }
 
-    // 💸 Costos
-    let energia = estado === "Falla" ? (Math.random()*15+5) : (Math.random()*2);
-    let costo = energia * 0.15;
-    let reparacion = estado === "Falla" ? (Math.random()*150+50) : 0;
-
-    // 🕒 Fecha
-    let fecha = new Date().toLocaleString();
-
-    // 🚨 ALERTA
-    if (estado === "Falla") {
-
-      totalAlertas++;
-
-      if (Notification.permission === "granted") {
-        new Notification("🚨 Falla detectada", {
-          body: `Panel ${p.panel} - ${p.ubicacion}`
-        });
-      }
-
-      new Audio("https://www.soundjay.com/buttons/beep-01a.mp3").play();
+    if (p.volt < 20) {
+      estado = "Falla";
+      tipo = "⚡ Caída de producción";
+      motivo = "Voltaje bajo";
+      recomendacion = "Revisar conexión";
+      prioridad = "Alta";
     }
 
-    // Crear tarjeta
-    const div = document.createElement("div");
+    if (p.volt == 0) {
+      estado = "Falla";
+      tipo = "🧱 Panel desconectado";
+      motivo = "Sin generación";
+      recomendacion = "Reconectar panel";
+      prioridad = "Alta";
+    }
+
+    if (p.eff < 60 && p.temp < 50) {
+      tipo = "🌫️ Suciedad o sombreado";
+      motivo = "Bloqueo de luz";
+      recomendacion = "Limpieza del panel";
+    }
+
+    // ⚡ PRODUCCIÓN
+    let energia = estado === "Falla" ? (Math.random()*15+5) : (Math.random()*5+10);
+    totalProd += energia;
+
+    let costo = energia * 0.15;
+    let reparacion = estado === "Falla" ? (Math.random()*200+50) : 0;
+
+    // 🛡️ GARANTÍA (AJUSTE INTELIGENTE)
+    let mensajeGarantia = "";
+    if (p.garantia === "si" && estado === "Falla") {
+      reparacion = 0;
+      mensajeGarantia = "🛡️ Cubierto por garantía";
+      recomendacion = "Contactar proveedor (sin costo)";
+    } else if (estado === "Falla") {
+      mensajeGarantia = "❌ Fuera de garantía";
+    }
+
+    let fecha = new Date().toLocaleString();
+
+    if (estado === "Falla") {
+      totalAlertas++;
+
+      let li = document.createElement("li");
+      li.innerText = `${tipo} en panel ${p.id}`;
+      historial.appendChild(li);
+    }
+
+    let div = document.createElement("div");
     div.className = estado === "Falla" ? "panel falla" : "panel";
 
     div.innerHTML = `
-      <h3>Panel ${p.panel}</h3>
+      <h3>Panel ${p.id}</h3>
       <p>📍 ${p.ubicacion}</p>
       <p>🕒 ${fecha}</p>
-      <p style="color:${estado === "Falla" ? "red" : "lightgreen"}">${estado}</p>
+      <p>${estado}</p>
+      <p>${tipo}</p>
 
       ${estado === "Falla" ? `
         <p>⚠️ Prioridad: ${prioridad}</p>
-        <p>❓ Motivo: ${motivo}</p>
-        <p>💡 Recomendación: ${recomendacion}</p>
+        <p>❓ ${motivo}</p>
+        <p>💡 ${recomendacion}</p>
+        <p>${mensajeGarantia}</p>
       ` : ""}
 
-      <p>⚡ Energía perdida: ${energia.toFixed(2)} kWh</p>
+      <p>⚡ Producción: ${energia.toFixed(2)} kWh</p>
       <p>💸 Pérdida: $${costo.toFixed(2)}</p>
       <p>🔧 Reparación: $${reparacion.toFixed(2)}</p>
     `;
 
-    document.getElementById("resultados").appendChild(div);
+    resultados.appendChild(div);
   });
 
-  document.getElementById("contador").innerText = totalAlertas;
+  produccion.innerText = totalProd.toFixed(2);
+  alertas.innerText = totalAlertas;
 }
 
 </script>
