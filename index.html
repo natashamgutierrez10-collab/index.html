@@ -5,242 +5,136 @@
 <title>Alerta Verde AI</title>
 
 <style>
-body {
-  font-family: Arial;
-  background: #0f172a;
-  color: white;
-  margin: 0;
-}
-
-.header {
-  background: #020617;
-  padding: 20px;
-  text-align: center;
-}
-
-.kpis {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin: 20px;
-}
-
-.kpi {
-  background: #1e293b;
-  padding: 15px;
-  border-radius: 10px;
-}
-
-.form {
-  text-align: center;
-}
+body { font-family: Arial; background:#0f172a; color:white; text-align:center; }
 
 input, button {
-  margin: 5px;
-  padding: 8px;
-  border-radius: 5px;
-  border: none;
+  margin:5px; padding:8px;
+  border-radius:5px; border:none;
 }
 
-button {
-  background: green;
-  color: white;
-}
-
-.grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-}
+button { background:green; color:white; }
 
 .card {
-  background: #1e293b;
-  margin: 10px;
-  padding: 15px;
-  width: 320px;
-  border-radius: 10px;
+  background:#1e293b;
+  margin:10px; padding:15px;
+  border-radius:10px;
+  width:300px;
+  display:inline-block;
 }
 
 .falla {
-  border: 2px solid red;
-  animation: parpadeo 0.8s infinite;
+  border:2px solid red;
+  animation: blink 1s infinite;
 }
 
-@keyframes parpadeo {
-  0% { background: #1e293b; }
-  50% { background: #7f1d1d; }
-  100% { background: #1e293b; }
+@keyframes blink {
+  50% { background:#7f1d1d; }
 }
 
-.alta { color: red; }
-.media { color: orange; }
-.baja { color: lightgreen; }
+/* semáforo */
+.semaforo div {
+  width:15px; height:15px;
+  border-radius:50%;
+  display:inline-block;
+  margin:2px;
+}
+
+.impacto {
+  background:#020617;
+  padding:8px;
+  margin-top:10px;
+  border-radius:8px;
+  font-size:14px;
+}
 
 </style>
 </head>
 
 <body>
 
-<div class="header">
-  <h1>🌱 Alerta Verde AI</h1>
-  <p>Monitoreo inteligente con alertas automáticas</p>
-</div>
+<h2>🌱 Alerta Verde AI</h2>
 
-<div class="kpis">
-  <div class="kpi">⚡ Producción: <span id="prod">0</span> kWh</div>
-  <div class="kpi">🚨 Alertas: <span id="alert">0</span></div>
-</div>
+<input id="id" placeholder="ID">
+<input id="ubi" placeholder="Ubicación">
+<input id="temp" placeholder="Temp">
+<input id="volt" placeholder="Voltaje">
+<input id="eff" placeholder="Eficiencia">
 
-<div class="form">
-  <input id="id" placeholder="ID">
-  <input id="ubi" placeholder="Ubicación">
-  <input id="temp" placeholder="Temp">
-  <input id="volt" placeholder="Voltaje">
-  <input id="corr" placeholder="Corriente">
-  <input id="eff" placeholder="Eficiencia">
+<br>
+<button onclick="add()">Agregar</button>
+<button onclick="run()">Analizar</button>
 
-  <br>
-  📅 Fecha instalación:
-  <input type="date" id="instalacion">
-
-  <br>
-  <button onclick="add()">➕ Agregar</button>
-  <button onclick="run()">🚀 Analizar</button>
-</div>
-
-<div class="grid" id="grid"></div>
+<div id="grid"></div>
 
 <script>
 
 let data = [];
 
-// 📧 FUNCIÓN DE CORREO (WEB3FORMS)
-function enviarCorreo(panel, tipo, ubicacion, motivo, prioridad){
-
-  fetch("https://api.web3forms.com/submit", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      access_key: "76312543-91d1-4848-b666-04739727e77f",
-
-      subject: "🚨 Alerta Panel Solar",
-
-      name: "Alerta Verde AI",
-
-      message:
-        "FALLA DETECTADA\n\n" +
-        "Panel: " + panel + "\n" +
-        "Ubicación: " + ubicacion + "\n" +
-        "Tipo: " + tipo + "\n" +
-        "Motivo: " + motivo + "\n" +
-        "Prioridad: " + prioridad
-    })
-  });
-
-}
-
-// ➕ AGREGAR PANEL
+// AGREGAR PANEL
 function add(){
   data.push({
     id: id.value,
     u: ubi.value,
-    t: +temp.value,
-    v: +volt.value,
-    c: +corr.value,
-    e: +eff.value,
-    f: new Date(instalacion.value)
+    t: Number(temp.value),
+    v: Number(volt.value),
+    e: Number(eff.value)
   });
 
   alert("Panel agregado");
 }
 
-// 🚀 ANALIZAR
+// ANALIZAR
 function run(){
 
   grid.innerHTML = "";
 
-  let produccionTotal = 0;
-  let totalAlertas = 0;
-
-  let hoy = new Date();
-
   data.forEach(p => {
 
-    let estado = "Normal";
-    let tipo = "";
-    let motivo = "";
-    let reco = "";
-    let prioridad = "baja";
+    let estado="Normal";
+    let color="green";
+    let motivo="Funcionamiento correcto";
+    let dano="Ninguno";
 
-    // 🔍 FALLAS
+    // FALLAS
     if(p.e < 50){
       estado="Falla";
-      tipo="🔻 Baja eficiencia";
-      motivo="Conversión energética baja";
-      reco="Limpiar o revisar daño";
-      prioridad="alta";
+      color="red";
+      motivo="Baja eficiencia energética";
+      dano="Celdas deterioradas";
     }
 
     if(p.t > 60){
       estado="Falla";
-      tipo="🔥 Sobrecalentamiento";
-      motivo="Temperatura elevada";
-      reco="Mejorar ventilación";
-      prioridad="media";
+      color="red";
+      motivo="Sobrecalentamiento";
+      dano="Daño térmico";
     }
 
     if(p.v < 20){
       estado="Falla";
-      tipo="⚡ Caída de producción";
+      color="red";
       motivo="Voltaje bajo";
-      reco="Revisar conexiones";
-      prioridad="alta";
+      dano="Problema eléctrico";
     }
 
     if(p.v == 0){
       estado="Falla";
-      tipo="🧱 Panel desconectado";
-      motivo="Sin generación eléctrica";
-      reco="Reconectar panel";
-      prioridad="alta";
+      color="red";
+      motivo="Panel desconectado";
+      dano="Cableado o inversor";
     }
 
-    if(p.e < 60 && p.t < 50){
-      tipo="🌫️ Suciedad o sombreado";
-      motivo="Bloqueo de luz solar";
-      reco="Limpiar panel";
+    if(estado==="Normal" && p.e < 60){
+      color="yellow";
+      motivo="Rendimiento bajo";
+      dano="Posible suciedad";
     }
 
-    // 🛡️ GARANTÍA (5 años)
-    let años = (hoy - p.f) / (1000*60*60*24*365);
-    let enGarantia = años <= 5;
-
-    // ⚡ PRODUCCIÓN
-    let energia = estado==="Falla" ? Math.random()*10+5 : Math.random()*10+10;
-    let costo = energia * 0.15;
-    let reparacion = estado==="Falla" ? Math.random()*200+50 : 0;
-
-    let garantiaMsg = "";
-    if(enGarantia && estado==="Falla"){
-      reparacion = 0;
-      garantiaMsg = "🛡️ Garantía activa";
-      reco = "Contactar proveedor";
-    } else if(estado==="Falla"){
-      garantiaMsg = "❌ Sin garantía";
-    }
-
-    let fecha = new Date().toLocaleString();
-
-    // 🚨 ALERTA + CORREO
-    if(estado==="Falla"){
-      totalAlertas++;
-
-      enviarCorreo(p.id, tipo, p.u, motivo, prioridad);
-    }
-
-    produccionTotal += energia;
+    // IMPACTO 🌱
+    let energia = Math.random()*10+10;
+    let co2 = energia * 0.5;
+    let clean = estado==="Falla" ? 60 : 100;
+    let ahorro = energia;
 
     let card = document.createElement("div");
     card.className = estado==="Falla" ? "card falla" : "card";
@@ -248,40 +142,31 @@ function run(){
     card.innerHTML = `
       <h3>Panel ${p.id}</h3>
       <p>📍 ${p.u}</p>
-      <p>🕒 ${fecha}</p>
-      <p>📅 Instalación: ${p.f.toLocaleDateString()}</p>
+
+      <!-- SEMÁFORO -->
+      <div class="semaforo">
+        <div style="background:${color==='green'?'green':'gray'}"></div>
+        <div style="background:${color==='yellow'?'yellow':'gray'}"></div>
+        <div style="background:${color==='red'?'red':'gray'}"></div>
+      </div>
 
       <p><b>${estado}</b></p>
-      <p>${tipo}</p>
 
-      ${estado==="Falla" ? `
-        <p class="${prioridad}">⚠️ Prioridad: ${prioridad}</p>
-        <p>❓ ${motivo}</p>
-        <p>💡 ${reco}</p>
-        <p>${garantiaMsg}</p>
-      ` : ""}
+      <p>⚠️ Motivo: ${motivo}</p>
+      <p>🔧 Daño: ${dano}</p>
 
-      <hr>
-
-      <p>⚡ Producción: ${energia.toFixed(2)} kWh</p>
-      <p>💸 Pérdida: $${costo.toFixed(2)}</p>
-      <p>🔧 Reparación: $${reparacion.toFixed(2)}</p>
+      <div class="impacto">
+        <p>🌱 CO2 evitado: ${co2.toFixed(2)} kg</p>
+        <p>⚡ Energía limpia: ${clean}%</p>
+        <p>💰 Ahorro: ${ahorro.toFixed(2)} kWh</p>
+      </div>
     `;
 
     grid.appendChild(card);
 
   });
 
-  document.getElementById("prod").innerText = produccionTotal.toFixed(2);
-  document.getElementById("alert").innerText = totalAlertas;
 }
-
-// 🔄 MONITOREO AUTOMÁTICO
-setInterval(() => {
-  if(data.length > 0){
-    run();
-  }
-}, 15000);
 
 </script>
 
