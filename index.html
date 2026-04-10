@@ -12,12 +12,29 @@ body {
   margin: 0;
 }
 
+/* LOGIN */
+#login {
+  text-align: center;
+  margin-top: 100px;
+}
+
+/* HEADER */
 .header {
   background: #020617;
   padding: 20px;
   text-align: center;
 }
 
+/* SEMÁFORO */
+#semaforo div {
+  width:50px;
+  height:50px;
+  border-radius:50%;
+  display:inline-block;
+  margin:5px;
+}
+
+/* KPIs */
 .kpis {
   display: flex;
   justify-content: center;
@@ -31,6 +48,7 @@ body {
   border-radius: 10px;
 }
 
+/* FORM */
 .form {
   text-align: center;
 }
@@ -47,12 +65,14 @@ button {
   color: white;
 }
 
+/* GRID */
 .grid {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
 }
 
+/* CARDS */
 .card {
   background: #1e293b;
   margin: 10px;
@@ -81,16 +101,34 @@ button {
 
 <body>
 
-<div class="header">
-  <h1>🌱 Alerta Verde AI</h1>
-  <p>Monitoreo inteligente con alertas automáticas</p>
+<!-- LOGIN -->
+<div id="login">
+  <h2>🌱 Alerta Verde AI</h2>
+  <input id="user" placeholder="Usuario">
+  <button onclick="login()">Entrar</button>
 </div>
 
+<!-- APP -->
+<div id="app" style="display:none;">
+
+<div class="header">
+  <h1>Dashboard</h1>
+</div>
+
+<!-- SEMÁFORO -->
+<div id="semaforo" style="text-align:center;">
+  <div id="verde" style="background:green;"></div>
+  <div id="amarillo" style="background:gray;"></div>
+  <div id="rojo" style="background:gray;"></div>
+</div>
+
+<!-- KPIs -->
 <div class="kpis">
-  <div class="kpi">⚡ Producción: <span id="prod">0</span> kWh</div>
+  <div class="kpi">⚡ Producción: <span id="prod">0</span></div>
   <div class="kpi">🚨 Alertas: <span id="alert">0</span></div>
 </div>
 
+<!-- FORM -->
 <div class="form">
   <input id="id" placeholder="ID">
   <input id="ubi" placeholder="Ubicación">
@@ -100,7 +138,7 @@ button {
   <input id="eff" placeholder="Eficiencia">
 
   <br>
-  📅 Fecha instalación:
+  📅 Instalación:
   <input type="date" id="instalacion">
 
   <br>
@@ -110,38 +148,58 @@ button {
 
 <div class="grid" id="grid"></div>
 
+</div>
+
 <script>
 
 let data = [];
+let usuario = "";
 
-// 📧 FUNCIÓN DE CORREO (WEB3FORMS)
+// LOGIN
+function login(){
+  usuario = document.getElementById("user").value;
+  localStorage.setItem("usuario", usuario);
+
+  document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="block";
+
+  cargarDatos();
+}
+
+// GUARDAR
+function guardar(){
+  localStorage.setItem(usuario, JSON.stringify(data));
+}
+
+// CARGAR
+function cargarDatos(){
+  let datos = localStorage.getItem(usuario);
+  if(datos){
+    data = JSON.parse(datos);
+  }
+}
+
+// CORREO WEB3FORMS
 function enviarCorreo(panel, tipo, ubicacion, motivo, prioridad){
 
   fetch("https://api.web3forms.com/submit", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers: {"Content-Type": "application/json"},
     body: JSON.stringify({
       access_key: "76312543-91d1-4848-b666-04739727e77f",
-
       subject: "🚨 Alerta Panel Solar",
-
-      name: "Alerta Verde AI",
-
       message:
-        "FALLA DETECTADA\n\n" +
-        "Panel: " + panel + "\n" +
-        "Ubicación: " + ubicacion + "\n" +
-        "Tipo: " + tipo + "\n" +
-        "Motivo: " + motivo + "\n" +
-        "Prioridad: " + prioridad
+        "Panel: " + panel +
+        "\nUbicación: " + ubicacion +
+        "\nTipo: " + tipo +
+        "\nMotivo: " + motivo +
+        "\nPrioridad: " + prioridad
     })
   });
 
 }
 
-// ➕ AGREGAR PANEL
+// AGREGAR
 function add(){
   data.push({
     id: id.value,
@@ -153,135 +211,121 @@ function add(){
     f: new Date(instalacion.value)
   });
 
+  guardar();
   alert("Panel agregado");
 }
 
-// 🚀 ANALIZAR
+// ANALIZAR
 function run(){
 
   grid.innerHTML = "";
 
-  let produccionTotal = 0;
-  let totalAlertas = 0;
+  let prod = 0;
+  let alertas = 0;
+  let estadoGlobal = "verde";
 
   let hoy = new Date();
 
   data.forEach(p => {
 
-    let estado = "Normal";
-    let tipo = "";
-    let motivo = "";
-    let reco = "";
-    let prioridad = "baja";
+    let estado="Normal";
+    let tipo="";
+    let motivo="";
+    let reco="";
+    let prioridad="baja";
 
-    // 🔍 FALLAS
     if(p.e < 50){
       estado="Falla";
       tipo="🔻 Baja eficiencia";
-      motivo="Conversión energética baja";
-      reco="Limpiar o revisar daño";
+      motivo="Conversión baja";
+      reco="Limpiar";
       prioridad="alta";
     }
 
     if(p.t > 60){
       estado="Falla";
       tipo="🔥 Sobrecalentamiento";
-      motivo="Temperatura elevada";
-      reco="Mejorar ventilación";
+      motivo="Alta temperatura";
+      reco="Ventilar";
       prioridad="media";
     }
 
     if(p.v < 20){
       estado="Falla";
-      tipo="⚡ Caída de producción";
+      tipo="⚡ Caída producción";
       motivo="Voltaje bajo";
-      reco="Revisar conexiones";
+      reco="Revisar";
       prioridad="alta";
     }
 
     if(p.v == 0){
       estado="Falla";
-      tipo="🧱 Panel desconectado";
-      motivo="Sin generación eléctrica";
-      reco="Reconectar panel";
+      tipo="🧱 Desconectado";
+      motivo="Sin energía";
+      reco="Reconectar";
       prioridad="alta";
     }
 
-    if(p.e < 60 && p.t < 50){
-      tipo="🌫️ Suciedad o sombreado";
-      motivo="Bloqueo de luz solar";
-      reco="Limpiar panel";
+    if(estado==="Falla"){
+      alertas++;
+      estadoGlobal="rojo";
+      enviarCorreo(p.id, tipo, p.u, motivo, prioridad);
+    } else if(p.e < 60){
+      estadoGlobal="amarillo";
     }
 
-    // 🛡️ GARANTÍA (5 años)
-    let años = (hoy - p.f) / (1000*60*60*24*365);
-    let enGarantia = años <= 5;
-
-    // ⚡ PRODUCCIÓN
     let energia = estado==="Falla" ? Math.random()*10+5 : Math.random()*10+10;
-    let costo = energia * 0.15;
+    prod += energia;
+
+    let costo = energia*0.15;
     let reparacion = estado==="Falla" ? Math.random()*200+50 : 0;
 
-    let garantiaMsg = "";
-    if(enGarantia && estado==="Falla"){
+    let años = (hoy - p.f)/(1000*60*60*24*365);
+    let garantia = años <= 5;
+
+    let garantiaMsg = garantia ? "🛡️ Activa" : "❌ Vencida";
+    if(garantia && estado==="Falla"){
       reparacion = 0;
-      garantiaMsg = "🛡️ Garantía activa";
-      reco = "Contactar proveedor";
-    } else if(estado==="Falla"){
-      garantiaMsg = "❌ Sin garantía";
+      reco="Contactar proveedor";
     }
-
-    let fecha = new Date().toLocaleString();
-
-    // 🚨 ALERTA + CORREO
-    if(estado==="Falla"){
-      totalAlertas++;
-
-      enviarCorreo(p.id, tipo, p.u, motivo, prioridad);
-    }
-
-    produccionTotal += energia;
 
     let card = document.createElement("div");
     card.className = estado==="Falla" ? "card falla" : "card";
 
     card.innerHTML = `
-      <h3>Panel ${p.id}</h3>
-      <p>📍 ${p.u}</p>
-      <p>🕒 ${fecha}</p>
-      <p>📅 Instalación: ${p.f.toLocaleDateString()}</p>
-
-      <p><b>${estado}</b></p>
+      <h3>${p.id}</h3>
+      <p>${p.u}</p>
+      <p>${estado}</p>
       <p>${tipo}</p>
-
-      ${estado==="Falla" ? `
-        <p class="${prioridad}">⚠️ Prioridad: ${prioridad}</p>
-        <p>❓ ${motivo}</p>
-        <p>💡 ${reco}</p>
-        <p>${garantiaMsg}</p>
-      ` : ""}
-
-      <hr>
-
-      <p>⚡ Producción: ${energia.toFixed(2)} kWh</p>
-      <p>💸 Pérdida: $${costo.toFixed(2)}</p>
-      <p>🔧 Reparación: $${reparacion.toFixed(2)}</p>
+      <p>${motivo}</p>
+      <p>${reco}</p>
+      <p>${prioridad}</p>
+      <p>${garantiaMsg}</p>
+      <p>⚡ ${energia.toFixed(2)} kWh</p>
+      <p>💸 $${costo.toFixed(2)}</p>
+      <p>🔧 $${reparacion.toFixed(2)}</p>
     `;
 
     grid.appendChild(card);
-
   });
 
-  document.getElementById("prod").innerText = produccionTotal.toFixed(2);
-  document.getElementById("alert").innerText = totalAlertas;
+  // SEMÁFORO
+  verde.style.background="gray";
+  amarillo.style.background="gray";
+  rojo.style.background="gray";
+
+  if(estadoGlobal==="verde") verde.style.background="green";
+  if(estadoGlobal==="amarillo") amarillo.style.background="yellow";
+  if(estadoGlobal==="rojo") rojo.style.background="red";
+
+  document.getElementById("prod").innerText = prod.toFixed(2);
+  document.getElementById("alert").innerText = alertas;
 }
 
-// 🔄 MONITOREO AUTOMÁTICO
-setInterval(() => {
-  if(data.length > 0){
-    run();
-  }
-}, 15000);
+// AUTO
+setInterval(()=>{
+  if(data.length>0) run();
+},15000);
 
 </script>
 
